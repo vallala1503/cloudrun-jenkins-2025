@@ -4,7 +4,7 @@ pipeline {
     environment {
         PROJECT_ID = 'food-project-1503'  // GCP Project ID
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account')  // Service account credentials
-        DOCKER_HUB_CREDENTIALS_USR = 'dockerasif999
+        DOCKER_HUB_CREDENTIALS_USR = 'dockerasif999'
 
 '  // Your Docker Hub username
         IMAGE_NAME = 'cloudrun'  // Docker image name
