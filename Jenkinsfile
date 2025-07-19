@@ -39,29 +39,34 @@ pipeline {
         }
 
         stage('Deploy to Google Cloud Run') {
-            steps {
-                script {
-                    // Authenticate with Google Cloud using the service account key stored in Jenkins
-                    withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                        // Set GCP project
-                        sh "gcloud config set project ${PROJECT_ID}"
+    steps {
+        script {
+            withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                sh """
+                    # Activate service account using the JSON key file
+                    gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
 
-                        // Deploy the Docker image from Docker Hub to Google Cloud Run
-                        sh "gcloud run deploy ${IMAGE_NAME} \
-                            --image docker.io/${DOCKER_HUB_CREDENTIALS_USR}/${IMAGE_NAME}:${BUILD_NUMBER} \
-                            --platform managed \
-                            --region us-central1 \
-                            --allow-unauthenticated"
-                        
-                        // Add IAM policy to allow public access to the Cloud Run service
-                        sh "gcloud run services add-iam-policy-binding ${IMAGE_NAME} \
-                            --region us-central1 \
-                            --member='allUsers' \
-                            --role='roles/run.invoker'"
-                    }
-                }
+                    # Set GCP project
+                    gcloud config set project ${PROJECT_ID}
+
+                    # Deploy to Cloud Run
+                    gcloud run deploy ${IMAGE_NAME} \
+                        --image docker.io/${DOCKER_HUB_CREDENTIALS_USR}/${IMAGE_NAME}:${BUILD_NUMBER} \
+                        --platform managed \
+                        --region us-central1 \
+                        --allow-unauthenticated
+
+                    # Add IAM policy to allow public access
+                    gcloud run services add-iam-policy-binding ${IMAGE_NAME} \
+                        --region us-central1 \
+                        --member='allUsers' \
+                        --role='roles/run.invoker'
+                """
             }
         }
+    }
+}
+
 
         stage('Cleanup Workspace') {
             steps {
